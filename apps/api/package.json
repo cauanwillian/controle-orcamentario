@@ -1,0 +1,25 @@
+{
+  "name": "@orcamento/api",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "pnpm build && node dist/main.js",
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.0.1",
+    "@nestjs/common": "^11.1.6",
+    "@nestjs/core": "^11.1.6",
+    "@nestjs/platform-fastify": "^11.1.6",
+    "dotenv": "^16.5.0",
+    "pg": "8.23.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/pg": "8.23.1",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

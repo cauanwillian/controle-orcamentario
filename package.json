@@ -1,0 +1,22 @@
+{
+  "name": "orcamento-contabil",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.25.0",
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down",
+    "infra:logs": "docker compose logs -f",
+    "db:migrate": "pnpm --filter @orcamento/worker db:migrate",
+    "import:plan": "pnpm --filter @orcamento/worker import:plan",
+    "import:access": "pnpm --filter @orcamento/worker import:access",
+    "import:budget": "pnpm --filter @orcamento/worker import:budget",
+    "import:ledger": "pnpm --filter @orcamento/worker import:ledger",
+    "ledger:status": "pnpm --filter @orcamento/worker ledger:status",
+    "dev": "concurrently --kill-others-on-fail \"pnpm --filter @orcamento/web dev\" \"pnpm --filter @orcamento/api dev\"",
+    "build": "pnpm -r build"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

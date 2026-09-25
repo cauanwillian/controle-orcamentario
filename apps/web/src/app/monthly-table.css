@@ -1,0 +1,46 @@
+.monthly-table {
+  min-width: 1780px;
+}
+
+.monthly-table.ledger-table {
+  min-width: 1380px;
+}
+
+.monthly-table thead tr:first-child th {
+  padding-top: .7rem;
+  padding-bottom: .7rem;
+  text-transform: uppercase;
+}
+
+.monthly-table thead tr:nth-child(2) th {
+  font-size: .6rem;
+  letter-spacing: .025em;
+}
+
+.monthly-table .month-start {
+  border-left: 3px solid #78b7b0;
+}
+
+.monthly-table .accumulated-head,
+.monthly-table .total-cell {
+  background-color: #e7f0ed;
+}
+
+.monthly-table > tbody > tr > td:nth-child(4n + 1) {
+  background-color: #f6faf9;
+  font-weight: 700;
+}
+
+.monthly-table > tbody > tr:hover > td:nth-child(4n + 1) {
+  background-color: #eaf5f1;
+}
+
+.monthly-table > thead > tr > th,
+.monthly-table > tbody > tr > td,
+.monthly-table > tbody > tr > th {
+  min-width: 106px;
+}
+
+.monthly-table > tbody > tr > th {
+  min-width: 230px;
+}

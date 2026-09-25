@@ -1,0 +1,1 @@
+ALTER TABLE account ALTER COLUMN group_name DROP NOT NULL;

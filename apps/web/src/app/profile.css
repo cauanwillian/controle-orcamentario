@@ -1,0 +1,27 @@
+.profile-picker {
+  display: grid;
+  gap: .28rem;
+  color: #5c7273;
+  font-size: .65rem;
+  font-weight: 800;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.profile-picker select {
+  min-width: 240px;
+  max-width: 330px;
+  padding: .5rem .6rem;
+  border: 1px solid #bfd0cd;
+  border-radius: .45rem;
+  background: #fff;
+  color: #163c40;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+@media (max-width: 640px) {
+  .profile-picker, .profile-picker select { width: 100%; max-width: none; }
+}

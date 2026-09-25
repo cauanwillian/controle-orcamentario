@@ -1,0 +1,30 @@
+{
+  "name": "@orcamento/worker",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "pnpm build && node dist/index.js",
+    "build": "tsc -p tsconfig.json",
+    "db:migrate": "pnpm build && node dist/database/migrate.js",
+    "import:plan": "pnpm build && node dist/imports/import-plan.js",
+    "import:access": "pnpm build && node dist/imports/import-access.js",
+    "import:budget": "pnpm build && node dist/imports/import-budget.js",
+    "import:ledger": "pnpm build && node dist/imports/import-ledger.js",
+    "ledger:status": "pnpm build && node dist/jobs/ledger-status.js"
+  },
+  "dependencies": {
+    "bullmq": "^5.58.7",
+    "dotenv": "^16.5.0",
+    "exceljs": "^4.4.0",
+    "ioredis": "^5.5.0",
+    "pg": "^8.16.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "@types/pg": "^8.11.10",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
