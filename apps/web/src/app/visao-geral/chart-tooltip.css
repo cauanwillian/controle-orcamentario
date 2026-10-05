@@ -1,0 +1,3 @@
+/* O tooltip segue o cursor; a posição é informada pela página em tempo real. */
+.chart-tooltip{position:fixed!important;right:auto!important;bottom:auto!important;z-index:60;pointer-events:none;max-width:290px}.chart-tooltip strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:640px){.chart-tooltip{position:fixed!important;margin:0!important;max-width:calc(100vw - 28px)}}

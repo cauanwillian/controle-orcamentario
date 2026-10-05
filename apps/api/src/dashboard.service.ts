@@ -11,8 +11,8 @@ dotenv.config({ path: existsSync(localEnv) ? localEnv : path.resolve(process.cwd
 type Dimension = "group" | "subgroup" | "sector" | "pa" | "account";
 type OverviewFilters = { paCode?: string; sectorName?: string; groupName?: string; subgroupName?: string; period?: string; accountSearch?: string; employeeCode?: string };
 
-function localDate(timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+function localDate(timeZone: string, point = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(point);
   const part = (type: string) => parts.find((item) => item.type === type)?.value;
   return `${part("year")}-${part("month")}-${part("day")}`;
 }
@@ -54,6 +54,25 @@ export class DashboardService implements OnModuleDestroy {
       return a.code.localeCompare(b.code, "pt-BR", { numeric: true });
     });
     return { years: years.rows.map((row) => row.year), pas: orderedPas, sectors: sectors.rows.map((row) => row.name) };
+  }
+
+  async ledgerImportStatus(employeeCode?: string) {
+    await this.accessService.resolve(employeeCode);
+    const [settingsResult, holidaysResult, latestResult, uploadResult] = await Promise.all([
+      this.pool.query<{ setting_key: string; setting_value: string }>("SELECT setting_key, setting_value FROM app_setting WHERE setting_key IN ('business_timezone', 'ledger_accounting_lag_days', 'ledger_import_deadline')"),
+      this.pool.query<{ holiday_date: string }>("SELECT holiday_date::text FROM business_holiday"),
+      this.pool.query<{ posting_date: string | null }>("SELECT MAX(posting_date)::text AS posting_date FROM ledger_entry"),
+      this.pool.query<{ uploaded_at: string | null; uploader: string | null }>("SELECT u.uploaded_at::text, e.name AS uploader FROM ledger_upload u JOIN employee e ON e.id = u.uploaded_by_employee_id ORDER BY u.uploaded_at DESC LIMIT 1")
+    ]);
+    const settings = new Map(settingsResult.rows.map((row) => [row.setting_key, row.setting_value]));
+    const timeZone = settings.get("business_timezone") ?? "America/Cuiaba";
+    const today = localDate(timeZone);
+    const expectedReferenceDate = businessCutoff(today, Number(settings.get("ledger_accounting_lag_days") ?? "3"), new Set(holidaysResult.rows.map((row) => row.holiday_date)));
+    const latestUpload = uploadResult.rows[0];
+    const uploadToday = latestUpload?.uploaded_at ? localDate(timeZone, new Date(latestUpload.uploaded_at)) === today : false;
+    const latestLedgerDate = latestResult.rows[0].posting_date;
+    const referenceOk = Boolean(latestLedgerDate && latestLedgerDate >= expectedReferenceDate);
+    return { status: uploadToday && referenceOk ? "EM_DIA" : "PENDENTE", deadline: settings.get("ledger_import_deadline") ?? "09:00", uploadedToday: uploadToday, uploadedAt: latestUpload?.uploaded_at ?? null, uploader: latestUpload?.uploader ?? null, expectedReferenceDate, latestLedgerDate, referenceOk };
   }
 
   async overview(year: number, dimension: Dimension, filters: OverviewFilters = {}) {
@@ -159,7 +178,11 @@ export class DashboardService implements OnModuleDestroy {
       const budget = values.reduce((sum, value) => sum + value.budget, 0);
       const actual = values.reduce((sum, value) => sum + value.actual, 0);
       return { label: row.label, values, budget, actual, variation: actual - budget, variationPercent: budget === 0 ? null : (actual - budget) / Math.abs(budget) };
-    }).sort((a, b) => dimension === "pa" ? Number(a.label) - Number(b.label) : Math.abs(b.variation) - Math.abs(a.variation));
+    }).sort((a, b) => {
+      if (dimension === "pa") return Number(a.label) - Number(b.label);
+      if (dimension === "sector") return a.label.localeCompare(b.label, "pt-BR", { sensitivity: "base" });
+      return Math.abs(b.variation) - Math.abs(a.variation);
+    });
     const budget = data.reduce((sum, row) => sum + row.budget, 0);
     const actual = data.reduce((sum, row) => sum + row.actual, 0);
     return {

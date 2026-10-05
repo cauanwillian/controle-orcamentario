@@ -7,6 +7,7 @@
   letter-spacing: .07em;
   text-transform: uppercase;
 }
+.ledger-import-notice { width: fit-content; max-width: 100%; margin: 0 0 .8rem; padding: .5rem .7rem; border-radius: .45rem; font-size: .78rem; font-weight: 800; }.ledger-import-notice.ok { color: #126446; background: #e1f3e9; }.ledger-import-notice.pending { color: #913b33; background: #fff0ee; }
 
 .profile-picker select {
   min-width: 240px;

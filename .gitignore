@@ -1,5 +1,8 @@
 node_modules/
 .pnpm-store/
+logs/
+backups/
+apps/api/data/
 .next/
 dist/
 coverage/

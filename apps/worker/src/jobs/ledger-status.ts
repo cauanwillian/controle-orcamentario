@@ -6,8 +6,8 @@ import { Pool } from "pg";
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(currentDir, "../../../../.env") });
 
-function dateInTimeZone(timeZone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+function dateInTimeZone(timeZone: string, point = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(point);
   const value = (type: string) => parts.find((part) => part.type === type)?.value;
   return `${value("year")}-${value("month")}-${value("day")}`;
 }
@@ -24,6 +24,20 @@ function previousBusinessDays(today: string, count: number, holidays: Set<string
   return date.toISOString().slice(0, 10);
 }
 
+async function notifyPendingImport(payload: Record<string, unknown>) {
+  const webhook = process.env.TEAMS_WEBHOOK_URL;
+  if (!webhook) return { delivered: false, reason: "TEAMS_WEBHOOK_URL não configurada" };
+  const reference = String(payload.expected_reference_date ?? "—");
+  const latest = String(payload.latest_ledger_date ?? "não encontrada");
+  const response = await fetch(webhook, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ text: `⚠️ Controle Orçamentário: o Livro Razão está pendente após o prazo. Referência esperada: ${reference}; referência encontrada: ${latest}. Verifique o envio da Contabilidade.` }),
+  });
+  if (!response.ok) throw new Error(`Falha ao enviar alerta para Teams (${response.status}).`);
+  return { delivered: true };
+}
+
 async function run() {
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL não foi definida no arquivo .env.");
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
@@ -37,11 +51,22 @@ async function run() {
     const holidays = await pool.query<{ holiday_date: string }>("SELECT holiday_date::text FROM business_holiday");
     const today = dateInTimeZone(timeZone);
     const expectedReferenceDate = previousBusinessDays(today, lagDays, new Set(holidays.rows.map((holiday) => holiday.holiday_date)));
-    const latest = await pool.query<{ posting_date: string | null; imported_at: string | null }>("SELECT MAX(posting_date)::text AS posting_date, MAX(updated_at)::text AS imported_at FROM ledger_entry");
+    const [latest, upload] = await Promise.all([
+      pool.query<{ posting_date: string | null; imported_at: string | null }>("SELECT MAX(posting_date)::text AS posting_date, MAX(updated_at)::text AS imported_at FROM ledger_entry"),
+      pool.query<{ uploaded_at: string | null; uploader: string | null }>("SELECT u.uploaded_at::text, e.name AS uploader FROM ledger_upload u JOIN employee e ON e.id = u.uploaded_by_employee_id ORDER BY u.uploaded_at DESC LIMIT 1")
+    ]);
     const latestDate = latest.rows[0].posting_date;
-    const status = latestDate && latestDate >= expectedReferenceDate ? "EM_DIA" : "PENDENTE";
-    console.log(JSON.stringify({ time_zone: timeZone, import_deadline: deadline, lag_business_days: lagDays, expected_reference_date: expectedReferenceDate, latest_ledger_date: latestDate, status }, null, 2));
-    if (status !== "EM_DIA") process.exitCode = 2;
+    const latestUpload = upload.rows[0];
+    const uploadedToday = latestUpload?.uploaded_at ? dateInTimeZone(timeZone, new Date(latestUpload.uploaded_at)) === today : false;
+    const referenceStatus = latestDate && latestDate >= expectedReferenceDate ? "EM_DIA" : "PENDENTE";
+    const status = uploadedToday && referenceStatus === "EM_DIA" ? "EM_DIA" : "PENDENTE";
+    const payload = { time_zone: timeZone, import_deadline: deadline, lag_business_days: lagDays, expected_reference_date: expectedReferenceDate, latest_ledger_date: latestDate, latest_upload_at: latestUpload?.uploaded_at ?? null, latest_uploader: latestUpload?.uploader ?? null, upload_received_today: uploadedToday, reference_status: referenceStatus, status };
+    if (status !== "EM_DIA") {
+      try { Object.assign(payload, { notification: await notifyPendingImport(payload) }); }
+      catch (error) { Object.assign(payload, { notification: { delivered: false, reason: error instanceof Error ? error.message : "Falha desconhecida" } }); }
+      process.exitCode = 2;
+    }
+    console.log(JSON.stringify(payload, null, 2));
   } finally {
     await pool.end();
   }
