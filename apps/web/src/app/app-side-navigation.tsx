@@ -7,6 +7,7 @@ import { LoginSession } from "./login-screen";
 
 type Section = "overview" | "analysis" | "import" | "admin";
 type AnalysisView = "budget" | "ledger";
+type AnalysisDimension = "group" | "sector";
 type IconName = "overview" | "budget" | "ledger" | "import" | "admin" | "chevron";
 
 function Icon({ name }: { name: IconName }) {
@@ -21,7 +22,7 @@ function Icon({ name }: { name: IconName }) {
 
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((item) => item[0]).join("").toUpperCase() || "US";
 
-export function AppSideNavigation({ active, analysisView }: { active: Section; analysisView?: AnalysisView }) {
+export function AppSideNavigation({ active, analysisView, analysisDimension }: { active: Section; analysisView?: AnalysisView; analysisDimension?: AnalysisDimension }) {
   const [session, setSession] = useState<LoginSession | null>(null);
   const [expanded, setExpanded] = useState<AnalysisView | null>(active === "analysis" ? analysisView ?? "budget" : null);
 
@@ -45,8 +46,8 @@ export function AppSideNavigation({ active, analysisView }: { active: Section; a
     <a className="app-side-logo" href="/visao-geral" aria-label="Ir para Visão geral"><img src="/brand/sicoob-norte-mt.png" alt="Sicoob Norte MT" /></a>
     <nav aria-label="Áreas principais">
       <a className={`side-link ${active === "overview" ? "active" : ""}`} href="/visao-geral"><Icon name="overview" /><span>Visão geral</span></a>
-      <div className={`side-group ${active === "analysis" && analysisView === "budget" ? "active" : ""}`}><button type="button" className="side-link side-group-trigger" onClick={() => setExpanded(expanded === "budget" ? null : "budget")}><Icon name="budget" /><span>Orçamento</span><i className={expanded === "budget" ? "open" : ""}><Icon name="chevron" /></i></button>{expanded === "budget" ? <div className="side-children"><a className={active === "analysis" && analysisView === "budget" ? "selected" : ""} href="/?view=budget-group">Grupos</a><a href="/?view=budget-sector">Setores</a></div> : null}</div>
-      <div className={`side-group ${active === "analysis" && analysisView === "ledger" ? "active" : ""}`}><button type="button" className="side-link side-group-trigger" onClick={() => setExpanded(expanded === "ledger" ? null : "ledger")}><Icon name="ledger" /><span>Razão</span><i className={expanded === "ledger" ? "open" : ""}><Icon name="chevron" /></i></button>{expanded === "ledger" ? <div className="side-children"><a className={active === "analysis" && analysisView === "ledger" ? "selected" : ""} href="/?view=ledger-group">Grupos</a><a href="/?view=ledger-sector">Setores</a></div> : null}</div>
+      <div className={`side-group ${active === "analysis" && analysisView === "budget" ? "active" : ""}`}><button type="button" className="side-link side-group-trigger" aria-expanded={expanded === "budget"} aria-controls="side-budget-children" onClick={() => setExpanded(expanded === "budget" ? null : "budget")}><Icon name="budget" /><span>Orçamento</span><i className={expanded === "budget" ? "open" : ""}><Icon name="chevron" /></i></button>{expanded === "budget" ? <div className="side-children" id="side-budget-children"><a aria-current={active === "analysis" && analysisView === "budget" && analysisDimension === "group" ? "page" : undefined} className={active === "analysis" && analysisView === "budget" && analysisDimension === "group" ? "selected" : ""} href="/?view=budget-group">Grupos</a><a aria-current={active === "analysis" && analysisView === "budget" && analysisDimension === "sector" ? "page" : undefined} className={active === "analysis" && analysisView === "budget" && analysisDimension === "sector" ? "selected" : ""} href="/?view=budget-sector">Setores</a></div> : null}</div>
+      <div className={`side-group ${active === "analysis" && analysisView === "ledger" ? "active" : ""}`}><button type="button" className="side-link side-group-trigger" aria-expanded={expanded === "ledger"} aria-controls="side-ledger-children" onClick={() => setExpanded(expanded === "ledger" ? null : "ledger")}><Icon name="ledger" /><span>Razão</span><i className={expanded === "ledger" ? "open" : ""}><Icon name="chevron" /></i></button>{expanded === "ledger" ? <div className="side-children" id="side-ledger-children"><a aria-current={active === "analysis" && analysisView === "ledger" && analysisDimension === "group" ? "page" : undefined} className={active === "analysis" && analysisView === "ledger" && analysisDimension === "group" ? "selected" : ""} href="/?view=ledger-group">Grupos</a><a aria-current={active === "analysis" && analysisView === "ledger" && analysisDimension === "sector" ? "page" : undefined} className={active === "analysis" && analysisView === "ledger" && analysisDimension === "sector" ? "selected" : ""} href="/?view=ledger-sector">Setores</a></div> : null}</div>
       <a className={`side-link ${active === "import" ? "active" : ""}`} href="/envio-razao"><Icon name="import" /><span>Importações</span></a>
       <a className={`side-link ${active === "admin" ? "active" : ""}`} href="/admin"><Icon name="admin" /><span>Administração</span></a>
     </nav>

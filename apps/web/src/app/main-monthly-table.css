@@ -1,0 +1,120 @@
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.main-table-scroll-hint {
+  display: none;
+  margin: -.35rem 0 .55rem;
+  color: #547073;
+  font-size: .74rem;
+  font-weight: 700;
+}
+
+.main-monthly-scroll {
+  position: relative;
+  isolation: isolate;
+  overscroll-behavior-inline: contain;
+  scrollbar-color: #78aaa3 #edf3f1;
+  scrollbar-width: thin;
+}
+
+.main-monthly-scroll:focus-visible {
+  outline: 3px solid #0b827a;
+  outline-offset: 3px;
+}
+
+.main-monthly-table tbody > tr > th {
+  padding: 0;
+}
+
+/* Mantém o contexto da linha visível ao percorrer períodos horizontalmente. */
+.main-monthly-table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.main-monthly-table > thead {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
+.main-monthly-table > thead > tr > th {
+  box-shadow: inset 0 -1px 0 rgb(255 255 255 / 24%);
+}
+
+.main-monthly-table > thead > tr > th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 6;
+  box-shadow: 8px 0 14px -12px rgb(9 58 58 / 80%), inset 0 -1px 0 rgb(255 255 255 / 24%);
+}
+
+.main-monthly-table > tbody > tr > th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #fff;
+  box-shadow: 8px 0 14px -12px rgb(9 58 58 / 80%);
+}
+
+.main-monthly-table > tbody > tr:hover > th:first-child,
+.main-monthly-table > tbody > tr:focus-within > th:first-child {
+  background: #f2f7f5;
+}
+
+.main-monthly-table > tbody > tr.inline-ledger-row > td {
+  position: relative;
+  z-index: 1;
+}
+
+.main-sector-trigger {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 2.75rem;
+  gap: .55rem;
+  padding: .62rem .5rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+}
+
+.main-sector-trigger:hover {
+  background: #e4f2ef;
+}
+
+.main-sector-trigger:focus-visible {
+  outline: 3px solid #0b827a;
+  outline-offset: -3px;
+}
+
+.main-sector-trigger .sector-trigger-icon {
+  margin-left: 0;
+}
+
+@media (max-width: 1240px) {
+  .main-table-scroll-hint {
+    display: block;
+  }
+}
+
+@media (min-width: 901px) {
+  .main-monthly-scroll {
+    max-block-size: min(68vh, 44rem);
+    overflow-y: auto;
+    scrollbar-gutter: stable;
+  }
+}

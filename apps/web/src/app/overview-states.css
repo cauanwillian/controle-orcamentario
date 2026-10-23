@@ -1,0 +1,98 @@
+.dashboard-state {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #d8e6e3;
+  border-radius: 1rem;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+  margin-top: 1rem;
+  min-height: 12rem;
+  padding: 1.5rem;
+}
+
+.dashboard-state h3 {
+  color: #063f42;
+  font-size: 1.25rem;
+  margin: 0.25rem 0 0.45rem;
+}
+
+.dashboard-state p:not(.eyebrow) {
+  color: #587173;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 40rem;
+}
+
+.dashboard-error-state {
+  background: #fff8f7;
+  border-color: #efbbb5;
+}
+
+.dashboard-empty-state {
+  background: #f8fbfa;
+}
+
+.state-action {
+  background: #007b73;
+  border: 1px solid #007b73;
+  border-radius: 0.55rem;
+  color: #fff;
+  cursor: pointer;
+  flex: 0 0 auto;
+  font: inherit;
+  font-weight: 700;
+  min-height: 2.65rem;
+  padding: 0.65rem 1rem;
+}
+
+.state-action:hover {
+  background: #005f59;
+  border-color: #005f59;
+}
+
+.state-action:focus-visible {
+  outline: 3px solid #b6e2dc;
+  outline-offset: 3px;
+}
+
+.dashboard-skeleton {
+  display: grid;
+  flex: 1 1 32rem;
+  gap: 0.65rem;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  max-width: 34rem;
+}
+
+.dashboard-skeleton i,
+.dashboard-skeleton b {
+  animation: overview-shimmer 1.4s ease-in-out infinite alternate;
+  background: linear-gradient(100deg, #eaf2f0 8%, #f7fbfa 44%, #eaf2f0 82%);
+  background-size: 200% 100%;
+  border-radius: 0.45rem;
+  display: block;
+  height: 3.35rem;
+}
+
+.dashboard-skeleton b {
+  grid-column: span 2;
+  height: 4.2rem;
+}
+
+@keyframes overview-shimmer {
+  to { background-position: -200% 0; }
+}
+
+@media (max-width: 760px) {
+  .dashboard-state {
+    align-items: flex-start;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .dashboard-skeleton {
+    max-width: none;
+    width: 100%;
+  }
+}
