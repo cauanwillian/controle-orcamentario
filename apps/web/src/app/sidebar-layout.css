@@ -1,1 +1,18 @@
-@media(min-width:1051px){.dashboard-shell.app-with-sidebar,.overview-shell.app-with-sidebar,.admin-shell.app-with-sidebar,.upload-shell.app-with-sidebar{margin-left:318px!important}}
+.dashboard-shell.app-with-top-navigation,
+.overview-shell.app-with-top-navigation,
+.admin-shell.app-with-top-navigation,
+.upload-shell.app-with-top-navigation {
+  width: 100%;
+  min-width: 0;
+  min-height: calc(100dvh - 4.75rem);
+  margin: 0 !important;
+}
+.dashboard-shell.app-with-top-navigation { max-width: none; padding: 0 clamp(1rem, 2.5vw, 2.25rem) 3rem; }
+.overview-shell.app-with-top-navigation,
+.admin-shell.app-with-top-navigation,
+.upload-shell.app-with-top-navigation { padding: 2rem clamp(1rem, 2.5vw, 2.25rem) 3rem; }
+@media (max-width: 640px) {
+  .overview-shell.app-with-top-navigation,
+  .admin-shell.app-with-top-navigation,
+  .upload-shell.app-with-top-navigation { padding-top: 1.25rem; }
+}

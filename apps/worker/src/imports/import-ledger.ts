@@ -6,6 +6,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import ExcelJS from "exceljs";
 import { Pool } from "pg";
+import { ledgerIdentityKey } from "./ledger-identity.js";
+import { looksLikeLedgerEntry, parseLedgerSnapshotScope, registerLedgerSnapshotScope } from "./ledger-snapshot-scope.js";
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(currentDir, "../../../../.env") });
@@ -54,10 +56,6 @@ function postingDate(value: ExcelJS.CellValue | undefined, rowNumber: number): s
   return parsed.toISOString().slice(0, 10);
 }
 
-function hash(value: string) {
-  return createHash("sha256").update(value).digest("hex");
-}
-
 async function checksum(filePath: string) {
   return new Promise<string>((resolve, reject) => {
     const hasher = createHash("sha256");
@@ -88,6 +86,7 @@ async function readLedger(filePath: string) {
       return;
     }
     if (!(firstValue instanceof Date)) {
+      if (looksLikeLedgerEntry(row)) throw new Error(`Linha ${rowNumber}: DATA ausente ou inválida em um lançamento.`);
       skippedRows += 1;
       return;
     }
@@ -98,7 +97,7 @@ async function readLedger(filePath: string) {
     const paCode = text(row.getCell(4).value);
     if (!lotCode || !entryNumber || !paCode) throw new Error(`Linha ${rowNumber}: lote, lançamento ou PA não informado.`);
     const groupingCode = text(row.getCell(5).value);
-    const sourceKey = hash([date, accountCode, paCode, lotCode, entryNumber, groupingCode ?? ""].join("|"));
+    const sourceKey = ledgerIdentityKey(date, accountCode, paCode, lotCode, entryNumber);
     if (sourceKeys.has(sourceKey)) throw new Error(`Linha ${rowNumber}: lançamento duplicado no próprio arquivo.`);
     sourceKeys.add(sourceKey);
     rows.push({
@@ -119,7 +118,7 @@ async function readLedger(filePath: string) {
     });
   });
   if (rows.length === 0) throw new Error("Nenhum lançamento contábil foi identificado no arquivo.");
-  return { rows, skippedRows };
+  return { rows, skippedRows, scope: parseLedgerSnapshotScope(sheet, rows) };
 }
 
 async function run() {
@@ -127,11 +126,14 @@ async function run() {
   if (!filePath) throw new Error("Informe o caminho do arquivo: pnpm import:ledger -- \"C:\\caminho\\LIVRO_RAZAO.xlsx\"");
   if (!process.env.DATABASE_URL) throw new Error("DATABASE_URL não foi definida no arquivo .env.");
   if (!(await stat(filePath)).isFile()) throw new Error("O caminho informado não é um arquivo.");
-  const [{ rows, skippedRows }, fileChecksum] = await Promise.all([readLedger(filePath), checksum(filePath)]);
+  const [{ rows, skippedRows, scope }, fileChecksum] = await Promise.all([readLedger(filePath), checksum(filePath)]);
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   const client = await pool.connect();
   try {
+    const schema = await client.query<{ ready: boolean }>("SELECT to_regclass('ledger_entry_current') IS NOT NULL AND to_regclass('ledger_import_scope') IS NOT NULL AND EXISTS(SELECT 1 FROM schema_migration WHERE version='011_ledger_snapshot_scopes.sql') AS ready");
+    if (!schema.rows[0].ready) throw new Error("Atualize o banco com pnpm db:migrate antes de importar o Livro Razão.");
     await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('ledger-import-current'))");
     const batch = await client.query<{ id: string }>(
       "INSERT INTO import_batch (source_type, original_filename, checksum_sha256, status, reference_date) VALUES ('LIVRO_RAZAO', $1, $2, 'PROCESSANDO', $3) RETURNING id",
       [filePath.split(/[\\/]/).pop(), fileChecksum, rows.reduce((latest, row) => row.postingDate > latest ? row.postingDate : latest, rows[0].postingDate)]
@@ -154,6 +156,7 @@ async function run() {
         values
       );
     }
+    await registerLedgerSnapshotScope(client, batchId, scope);
     await client.query("UPDATE import_batch SET status = 'PUBLICADO', record_count = $1, completed_at = NOW() WHERE id = $2", [rows.length, batchId]);
     await client.query("COMMIT");
     const unmappedAccounts = new Set(rows.filter((row) => !accountIds.has(row.accountCode)).map((row) => row.accountCode));

@@ -1,0 +1,105 @@
+.entry-month-list { min-width: 0; }
+.entry-month-trigger {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  width: 100%;
+  min-height: 2.5rem;
+  padding: .5rem .75rem;
+  border: 1px solid #c9e0db;
+  border-radius: .4rem;
+  background: #e9f5f1;
+  color: #00655f;
+  text-align: left;
+  cursor: pointer;
+  font-size: .75rem;
+  font-weight: 800;
+}
+.entry-month-trigger:hover { border-color: #78b7b0; background: #dcefe9; }
+.entry-month-trigger svg, .entry-month-close svg { flex: 0 0 1rem; width: 1rem; height: 1rem; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.entry-month-trigger small { color: #527477; font-size: .7rem; font-weight: 500; }
+.entry-month-trigger .entry-month-open-hint { margin-left: auto; font-size: .7rem; font-weight: 600; }
+.entry-month-trigger:focus-visible, .entry-month-close:focus-visible, .entry-month-dialog-body:focus-visible, .entry-day-scroll:focus-visible, .entry-month-day-option:focus-visible, .entry-month-all-days:focus-visible { outline: 3px solid #008075; outline-offset: 3px; }
+
+.entry-month-dialog {
+  width: min(70rem, calc(100vw - 3rem));
+  max-width: none;
+  max-height: calc(100dvh - 3rem);
+  margin: auto;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #c9ded8;
+  border-radius: .75rem;
+  background: #fff;
+  color: #123f43;
+  font-family: Arial, Helvetica, sans-serif;
+  box-shadow: 0 1rem 3rem #003b4233;
+}
+.entry-month-dialog::backdrop { background: #002d32a6; }
+.entry-month-dialog-layout { display: flex; flex-direction: column; max-height: calc(100dvh - 3rem); }
+.entry-month-dialog-header { display: flex; flex: 0 0 auto; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.25rem 1.5rem 1rem; border-bottom: 1px solid #d8e7e4; }
+.entry-month-dialog-eyebrow { margin: 0 0 .5rem; color: #006b65; font-size: .65rem; font-weight: 800; letter-spacing: .08em; }
+.entry-month-dialog-header h2 { margin: 0; color: #004d55; font-size: 1.35rem; line-height: 1.25; }
+.entry-month-dialog-header p:last-child { margin: .5rem 0 0; color: #607779; font-size: .75rem; }
+.entry-month-close { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; gap: .5rem; min-height: 2.5rem; padding: .5rem .75rem; border: 1px solid #c9dbd7; border-radius: .4rem; background: #fff; color: #075f61; font-size: .75rem; font-weight: 700; cursor: pointer; }
+.entry-month-close:hover { background: #edf7f4; border-color: #78b7b0; }
+.entry-month-dialog-context { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 1rem; padding: .75rem 1.5rem; background: #f3f9f6; border-bottom: 1px solid #d8e7e4; }
+.entry-month-dialog-context > div { display: grid; min-width: 0; gap: .25rem; }
+.entry-month-dialog-context strong { font-size: .8rem; line-height: 1.4; overflow-wrap: anywhere; }
+.entry-month-dialog-context span { color: #607779; font-size: .7rem; }
+.entry-month-dialog-context .entry-month-total { flex: 0 0 auto; text-align: right; }
+.entry-month-total strong { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.entry-month-date-filter { flex: 0 0 auto; padding: .75rem 1.5rem; border-bottom: 1px solid #d8e7e4; background: #fff; }
+.entry-month-filter-heading { display: flex; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .75rem; }
+.entry-month-filter-title { display: block; color: #075f61; font-size: .75rem; font-weight: 700; }
+.entry-month-filter-help { margin: .25rem 0 0; color: #607779; font-size: .7rem; line-height: 1.4; }
+.entry-month-all-days { flex: 0 0 auto; min-height: 2.75rem; padding: .5rem .75rem; border: 1px solid #bed6cf; border-radius: .4rem; background: #fff; color: #075f61; font-size: .75rem; font-weight: 700; cursor: pointer; }
+.entry-month-all-days:hover { background: #edf7f4; }
+.entry-month-all-days[aria-pressed="true"] { border-color: #00655f; background: #00655f; color: #fff; }
+.entry-month-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr)); gap: .5rem; max-height: 11.25rem; overflow-y: auto; overscroll-behavior: contain; padding: .25rem; margin: -.25rem; }
+.entry-month-day-option { position: relative; display: grid; place-content: center; gap: .15rem; min-height: 3.25rem; padding: .5rem .75rem; border: 1px solid #d1e1dc; border-radius: .4rem; background: #fff; color: #075f61; text-align: center; cursor: pointer; }
+.entry-month-day-option:hover { border-color: #78b7b0; background: #f3f9f6; }
+.entry-month-day-number { font-size: .95rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.entry-month-day-option small { color: #607779; font-size: .65rem; line-height: 1.2; white-space: nowrap; }
+.entry-month-day-check { position: absolute; top: .25rem; right: .3rem; color: #00655f; font-size: .65rem; font-weight: 800; }
+.entry-month-day-option[aria-pressed="true"] { border-color: #008075; background: #e3f3eb; box-shadow: inset 0 0 0 1px #008075; }
+.entry-month-day-option[aria-pressed="true"] small { color: #075f61; }
+.entry-month-dialog-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 1rem 1.5rem; }
+.entry-day + .entry-day { margin-top: 1.25rem; }
+.entry-day-heading { display: flex; flex-wrap: wrap; align-items: baseline; gap: .75rem; margin-bottom: .5rem; }
+.entry-day-heading h3 { margin: 0; color: #075f61; font-size: .85rem; }
+.entry-day-heading > span { color: #607779; font-size: .7rem; }
+.entry-day-scroll { max-width: 100%; overflow-x: auto; border: 1px solid #d8e7e4; border-radius: .35rem; }
+.entry-day-table { width: 100%; min-width: 46rem; table-layout: fixed; border-collapse: collapse; font-size: .75rem; }
+.entry-day-table th, .entry-day-table td { padding: .5rem .65rem; line-height: 1.45; border-bottom: 1px solid #e1ece9; text-align: right; white-space: nowrap; vertical-align: top; font-variant-numeric: tabular-nums; }
+.entry-day-table thead th { position: static; background: #00655f; color: #fff; font-size: .65rem; font-weight: 700; letter-spacing: .02em; }
+.entry-day-table th:first-child, .entry-day-table td:first-child { width: 7rem; text-align: left; }
+.entry-day-table th:nth-child(2), .entry-day-table td:nth-child(2) { width: auto; text-align: left; }
+.entry-day-table th:nth-child(n + 3), .entry-day-table td:nth-child(n + 3) { width: 7.5rem; }
+.entry-day-table td.entry-day-history { white-space: normal; overflow-wrap: anywhere; font-variant-numeric: normal; }
+.entry-day-table tbody tr:last-child td { border-bottom: 0; }
+.entry-day-table tbody tr:nth-child(even) td { background: #f7fbf9; }
+.entry-day-table tbody tr:hover td { background: #edf7f4; }
+.entry-day-table td:last-child { font-weight: 700; }
+.entry-month-dialog-footer { flex: 0 0 auto; padding: .75rem 1.5rem; border-top: 1px solid #d8e7e4; background: #f7fbf9; color: #607779; font-size: .7rem; }
+.entry-month-dialog-footer span { float: right; }
+.entry-month-empty { margin: .5rem 0; color: #607779; font-size: .85rem; }
+@media (max-width: 640px) {
+  .entry-month-trigger .entry-month-open-hint { display: none; }
+  .entry-month-trigger > svg:last-child { margin-left: auto; }
+  .entry-month-dialog { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); border-radius: .5rem; }
+  .entry-month-dialog-layout { max-height: calc(100dvh - 1rem); }
+  .entry-month-dialog-header { padding: 1rem; }
+  .entry-month-dialog-context { flex-wrap: wrap; padding: .75rem 1rem; }
+  .entry-month-dialog-context .entry-month-total { text-align: left; }
+  .entry-month-date-filter { padding: .75rem 1rem; }
+  .entry-month-filter-heading { align-items: flex-start; }
+  .entry-month-all-days { padding-inline: .5rem; font-size: .7rem; }
+  .entry-month-dialog-body { padding: 1rem; }
+  .entry-month-dialog-footer { padding: .75rem 1rem; line-height: 1.5; }
+  .entry-month-dialog-footer span { display: block; float: none; }
+}
+@media (max-height: 600px) {
+  .entry-month-dialog-layout { overflow-y: auto; }
+  .entry-month-dialog-body { flex: 0 0 auto; overflow: visible; }
+}

@@ -1,19 +1,26 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import "./overview.css";
-import "./chart-tooltip.css";
 import { LoginSession } from "../login-screen";
 import { AppSideNavigation } from "../app-side-navigation";
+import { ExportExcelButton } from "../export-excel-button";
+import { EntrySearchField } from "../entry-search-field";
+import type { EntrySearch } from "../entry-search-field";
+import { readDashboardResponse } from "../dashboard-response";
+import { makeExportFilename, exportDate } from "../export-report";
+import type { ExportReport } from "../export-report";
 
 const api = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 const compactCurrency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", maximumFractionDigits: 1 });
 const fullCurrency = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });
 const percent = new Intl.NumberFormat("pt-BR", { style: "percent", maximumFractionDigits: 1 });
 const date = new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" });
-const monthName = new Intl.DateTimeFormat("pt-BR", { month: "long" });
+const monthName = new Intl.DateTimeFormat("pt-BR", { month: "long", timeZone: "UTC" });
+const favorableVariation = (row: Row) => row.variation * (row.variationDirection ?? 1) >= 0;
+const searchLabels = { history: "Palavra do histórico", amount: "Valor", entry: "Nº do lançamento" };
 
-type Row = { label: string; budget: number; actual: number; variation: number; variationPercent: number | null };
+type Row = { label: string; budget: number; actual: number; variation: number; variationPercent: number | null; variationDirection?: 1 | -1 };
 type Dashboard = { reportingDate: string; totals: { budget: number; actual: number; variation: number; variationPercent: number | null }; rows: Row[] };
 type Status = { status: "EM_DIA" | "PENDENTE"; deadline: string; uploadedToday: boolean; expectedReferenceDate: string; latestLedgerDate: string | null };
 type FilterOptions = { years: number[]; pas: { code: string; label: string }[]; sectors: string[] };
@@ -34,8 +41,10 @@ export default function VisaoGeral() {
   const [pa, setPa] = useState("");
   const [sector, setSector] = useState("");
   const [period, setPeriod] = useState("");
-  const [hovered, setHovered] = useState<{ row: Row; x: number; y: number } | null>(null);
+  const [entrySearch, setEntrySearch] = useState<EntrySearch>({ term: "", type: "history" });
   const [error, setError] = useState<string | null>(null);
+  const [loadedFilterKey, setLoadedFilterKey] = useState<string | null>(null);
+  const filterKey = JSON.stringify([year, pa, sector, period, entrySearch.term, entrySearch.type, session?.viewer.employeeCode ?? ""]);
 
   useEffect(() => {
     const raw = window.localStorage.getItem("orcamento-session");
@@ -61,35 +70,71 @@ export default function VisaoGeral() {
 
   useEffect(() => {
     if (!session) return;
+    const controller = new AbortController();
+    let alive = true;
+    const requestedFilterKey = filterKey;
     const headers = { authorization: `Bearer ${session.token}` };
-    const query = new URLSearchParams({ year: String(year), dimension: "group" });
+    const query = new URLSearchParams({ year: String(year), dimension: "group", reportDimension: "group" });
     if (pa) query.set("pa", pa);
     if (sector) query.set("sector", sector);
     if (period) query.set("period", period);
+    if (entrySearch.term) { query.set("search", entrySearch.term); query.set("searchType", entrySearch.type); }
 
     setError(null);
+    setData(null);
+    setLoadedFilterKey(null);
     Promise.all([
-      fetch(`${api}/dashboard/overview?${query.toString()}`, { headers }),
-      fetch(`${api}/dashboard/ledger-import-status`, { headers }),
+      fetch(`${api}/dashboard/overview?${query.toString()}`, { headers, signal: controller.signal }),
+      fetch(`${api}/dashboard/ledger-import-status`, { headers, signal: controller.signal }),
     ])
       .then(async ([overview, importStatus]) => {
-        if (!overview.ok || !importStatus.ok) throw new Error();
-        setData(await overview.json());
-        setStatus(await importStatus.json());
+        const [nextData, nextStatus] = await Promise.all([
+          readDashboardResponse<Dashboard>(overview, "Não foi possível carregar a visão geral com os filtros selecionados."),
+          readDashboardResponse<Status>(importStatus, "Não foi possível verificar a importação do Livro Razão."),
+        ]);
+        if (!alive) return;
+        setData(nextData);
+        setStatus(nextStatus);
+        setLoadedFilterKey(requestedFilterKey);
       })
-      .catch(() => setError("Não foi possível carregar a visão geral com os filtros selecionados."));
-  }, [session, year, pa, sector, period]);
+      .catch((cause: unknown) => { if (alive && !controller.signal.aborted) setError(cause instanceof Error ? cause.message : "Não foi possível carregar a visão geral com os filtros selecionados."); });
+    return () => { alive = false; controller.abort(); };
+  }, [session, year, pa, sector, period, entrySearch, filterKey]);
 
-  const rows = useMemo(() => data ? [...data.rows].sort((a, b) => Math.abs(b.variation) - Math.abs(a.variation)).slice(0, 6) : [], [data]);
-  const maxVariation = Math.max(...rows.map((row) => Math.abs(row.variation)), 1);
   const filterDescription = period
     ? monthOptions(year).find((item) => item.value === period)?.label ?? "Período selecionado"
     : `Acumulado de ${year}`;
+  const buildOverviewReport = (): ExportReport => {
+    if (!data || loadedFilterKey !== filterKey) throw new Error("Aguarde a atualização dos filtros antes de exportar.");
+    return {
+      fileName: makeExportFilename("visao-geral", String(year), pa ? `pa-${pa}` : "todos-pas", sector || "todos-setores", period || "acumulado"),
+      title: "Visão geral por grupo contábil",
+      sheetName: "Resumo",
+      metadata: [
+        ["Ano", year],
+        ["PA", pa ? pa.padStart(2, "0") : "Todos os PAs"],
+        ["Setor", sector || "Todos os setores"],
+        ["Período", period ? `${period.slice(5, 7)}/${period.slice(0, 4)}` : "Acumulado do ano"],
+        ["Buscar por", entrySearch.term ? searchLabels[entrySearch.type] : "Sem busca"],
+        ["Busca de lançamentos", entrySearch.term || "Todos os lançamentos"],
+        ["Percentual de execução", "Realizado / orçado"],
+        ["Data contábil de referência", exportDate(data.reportingDate)],
+      ],
+      columns: [
+        { header: "Grupo contábil", width: 48, format: "text" },
+        { header: "Orçado", format: "currency" },
+        { header: "Realizado", format: "currency" },
+        { header: "Variação", format: "currency" },
+        { header: "Execução (%)", format: "percent" },
+      ],
+      rows: data.rows.map(row => [row.label, row.budget, row.actual, row.variation, row.variationPercent]),
+      totalRow: ["TOTAL", data.totals.budget, data.totals.actual, data.totals.variation, data.totals.variationPercent],
+    };
+  };
 
   if (!session) return <main className="overview-shell"><section className="overview-empty"><h1>Sessão não encontrada</h1><a href="/">Ir para login</a></section></main>;
 
-  return <main className="overview-shell app-with-sidebar">
-    <AppSideNavigation active="overview" />
+  return <><AppSideNavigation active="overview" /><main className="overview-shell app-with-top-navigation">
     <section className="overview-page">
       <header className="overview-header">
         <div><p>CONTROLE ORÇAMENTÁRIO</p><h1>Visão geral</h1><span>Acompanhamento consolidado de orçado x realizado da cooperativa.</span></div>
@@ -108,38 +153,22 @@ export default function VisaoGeral() {
         <label>PA<select value={pa} onChange={(event) => setPa(event.target.value)}><option value="">Todos os PAs</option>{options.pas.map((item) => <option key={item.code} value={item.code}>{item.code}{item.label ? ` — ${item.label}` : ""}</option>)}</select></label>
         <label>Setor<select value={sector} onChange={(event) => setSector(event.target.value)}><option value="">Todos os setores</option>{options.sectors.map((item) => <option key={item} value={item}>{item}</option>)}</select></label>
         <label>Período<select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="">Acumulado do ano</option>{monthOptions(year).map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
+        <EntrySearchField value={entrySearch} onSearch={setEntrySearch} />
       </section>
+      {entrySearch.term ? <p className="entry-search-note" role="status">{searchLabels[entrySearch.type]}: “{entrySearch.term}”.{entrySearch.type === "amount" ? " Busca no débito, crédito ou realizado, sem considerar o sinal." : ""} O orçado corresponde às contas dos lançamentos encontrados.</p> : null}
+      {data?.rows.length === 0 ? <p className="overview-loading" role="status">Nenhum lançamento encontrado para os filtros selecionados.</p> : null}
 
       {error ? <p className="overview-error">{error}</p> : null}
       {data ? <>
         <section className="metric-grid">
           <article><span>Orçado acumulado</span><strong>{compactCurrency.format(data.totals.budget)}</strong><small>{filterDescription}</small></article>
           <article><span>Realizado acumulado</span><strong>{compactCurrency.format(data.totals.actual)}</strong><small>Até a data contábil de referência</small></article>
-          <article className={data.totals.variation >= 0 ? "positive" : "negative"}><span>Variação</span><strong>{compactCurrency.format(data.totals.variation)}</strong><small>{percent.format(data.totals.variationPercent ?? 0)}</small></article>
-          <article><span>Data contábil de referência</span><strong>{date.format(new Date(`${data.reportingDate}T12:00:00Z`))}</strong><small>Última referência processada</small></article>
+          <article className={data.totals.variation >= 0 ? "positive" : "negative"}><span>Variação</span><strong>{compactCurrency.format(data.totals.variation)}</strong><small>{data.totals.variationPercent === null ? "Sem orçamento no período" : `Execução: ${percent.format(data.totals.variationPercent)} do orçado`}</small></article>
+          <article><span>Data contábil de referência</span><strong>{date.format(new Date(`${data.reportingDate}T12:00:00Z`))}</strong><small>Data de corte dos valores</small></article>
         </section>
 
-        <section className="deviation-card">
-          <header><div><p>ANÁLISE</p><h2>Maiores desvios</h2></div><span>Passe o cursor sobre uma barra para ver o valor.</span></header>
-          <div className="deviation-chart">
-            <div className="chart-axis"><span>{fullCurrency.format(-maxVariation)}</span><span>R$ 0,00</span><span>{fullCurrency.format(maxVariation)}</span></div>
-            <div className="chart-rows">{rows.map((row) => {
-              const width = Math.max(2, Math.abs(row.variation) / maxVariation * 50);
-              const isPositive = row.variation >= 0;
-              return <div className="chart-row" key={row.label}>
-                <span className="chart-label" title={row.label}>{row.label}</span>
-                <button type="button" className="chart-track" aria-label={`${row.label}: ${fullCurrency.format(row.variation)}`} onMouseEnter={(event) => setHovered({ row, x: event.clientX, y: event.clientY })} onMouseMove={(event) => setHovered({ row, x: event.clientX, y: event.clientY })} onMouseLeave={() => setHovered(null)} onFocus={(event) => { const box = event.currentTarget.getBoundingClientRect(); setHovered({ row, x: box.left + box.width / 2, y: box.top }); }} onBlur={() => setHovered(null)}>
-                  <i className="chart-zero" />
-                  <b className={isPositive ? "positive" : "negative"} style={isPositive ? { left: "50%", width: `${width}%` } : { left: `${50 - width}%`, width: `${width}%` }} />
-                </button>
-              </div>;
-            })}</div>
-            {hovered ? <div className={`chart-tooltip ${hovered.row.variation >= 0 ? "positive" : "negative"}`} style={{ left: `${Math.min(hovered.x + 14, window.innerWidth - 310)}px`, top: `${Math.min(hovered.y + 14, window.innerHeight - 92)}px` }}><strong>{hovered.row.label}</strong><span>Variação: {fullCurrency.format(hovered.row.variation)}</span></div> : null}
-          </div>
-        </section>
-
-        <section className="overview-table"><header><p>RESUMO POR GRUPO CONTÁBIL</p><h2>Orçado, realizado e variação</h2></header><div><table><thead><tr><th>Grupo contábil</th><th>Orçado</th><th>Realizado</th><th>Variação</th><th>%</th></tr></thead><tbody>{data.rows.map((row) => <tr key={row.label}><td>{row.label}</td><td>{fullCurrency.format(row.budget)}</td><td>{fullCurrency.format(row.actual)}</td><td className={row.variation >= 0 ? "positive-text" : "negative-text"}>{fullCurrency.format(row.variation)}</td><td className={row.variationPercent !== null && row.variationPercent >= 0 ? "positive-text" : "negative-text"}>{row.variationPercent === null ? "—" : percent.format(row.variationPercent)}</td></tr>)}</tbody></table></div></section>
-      </> : <p className="overview-loading">Carregando indicadores…</p>}
+        <section className="overview-table"><header className="export-section-header"><div><p>RESUMO POR GRUPO CONTÁBIL</p><h2>Orçado, realizado e variação</h2></div><ExportExcelButton buildReport={buildOverviewReport} disabled={loadedFilterKey !== filterKey || data.rows.length === 0} /></header><div><table><thead><tr><th>Grupo contábil</th><th>Orçado</th><th>Realizado</th><th>Variação</th><th title="Realizado / orçado">Execução</th></tr></thead><tbody>{data.rows.map((row) => <tr key={row.label}><td>{row.label}</td><td>{fullCurrency.format(row.budget)}</td><td>{fullCurrency.format(row.actual)}</td><td className={favorableVariation(row) ? "positive-text" : "negative-text"}>{fullCurrency.format(row.variation)}</td><td className={favorableVariation(row) ? "positive-text" : "negative-text"}>{row.variationPercent === null ? "—" : percent.format(row.variationPercent)}</td></tr>)}</tbody></table></div></section>
+      </> : !error ? <p className="overview-loading">Carregando indicadores…</p> : null}
     </section>
-  </main>;
+  </main></>;
 }

@@ -19,9 +19,9 @@
 .ledger-description-node > summary b { overflow-wrap: anywhere; color: #12494c; font-size: .73rem; line-height: 1.35; }
 .ledger-description-node > summary small { color: #5e787a; font-size: .66rem; font-weight: 700; }
 .ledger-description-node > summary strong { flex: 0 0 auto; white-space: nowrap; font-size: .72rem; }
-.ledger-description-content { padding: .45rem .55rem .55rem 1rem; border-top: 1px solid #d8e7e4; background: #f5faf8; }
+.ledger-description-content { padding: .35rem .45rem .45rem .75rem; border-top: 1px solid #d8e7e4; background: #f5faf8; }
 .ledger-description-content > .ledger-date-list { padding: 0; border-top: 0; background: transparent; }
-.ledger-date-list { display: grid; gap: .4rem; padding: .5rem .65rem .7rem 1.2rem; border-top: 1px solid #d8e7e4; background: #f4faf8; }
+.ledger-date-list { display: grid; gap: .3rem; padding: .4rem .5rem .5rem .85rem; border-top: 1px solid #d8e7e4; background: #f4faf8; }
 .ledger-month-node { overflow: hidden; border: 1px solid #c9e0db; border-radius: .4rem; background: #fff; }
 .ledger-month-list { display: grid; gap: .35rem; }
 .ledger-month-node > summary,
@@ -38,7 +38,7 @@
 .ledger-entry-account-node[open] > summary::before { content: "−"; }
 .ledger-month-node > summary { display: flex; align-items: center; justify-content: flex-start; gap: .55rem; padding: .46rem .65rem; background: #e9f5f1; color: #00655f; cursor: pointer; font-size: .75rem; font-weight: 900; }
 .ledger-month-node > summary small { color: #527477; font-size: .68rem; font-weight: 700; }
-.ledger-month-dates { display: grid; gap: .4rem; padding: .55rem .65rem .65rem 1rem; background: #f7fbfa; }
+.ledger-month-dates { display: grid; gap: .25rem; padding: .35rem .45rem .45rem .75rem; background: #f7fbfa; }
 .ledger-month-accounts { display: grid; gap: .25rem; padding: .35rem .45rem .45rem .7rem; background: #f7fbfa; }
 .ledger-entry-account-node { overflow: hidden; border-left: 3px solid #78b7b0; background: #fff; }
 .ledger-entry-account-node > summary { display: flex; align-items: center; justify-content: flex-start; gap: .55rem; padding: .4rem .55rem; color: #104a4d; cursor: pointer; }
@@ -46,26 +46,32 @@
 .ledger-entry-account-node > summary b { font-size: .74rem; }
 .ledger-entry-account-node > summary small { overflow: hidden; max-width: 620px; color: #61797b; text-overflow: ellipsis; white-space: nowrap; font-size: .68rem; }
 .ledger-entry-account-node > summary em { flex: 0 0 auto; color: #61797b; font-size: .68rem; font-style: normal; font-weight: 700; white-space: nowrap; }
-.ledger-entry-account-node .inline-entries-scroll { margin: 0 .45rem .45rem; }
+.ledger-entry-account-node .inline-entries-scroll { margin: 0 .45rem .4rem; }
 .ledger-entry-account-node .inline-entries-scroll,
-.ledger-date-node .inline-entries-scroll { overflow-x: auto; }
+.ledger-date-node .inline-entries-scroll { width: fit-content; max-width: 100%; overflow-x: auto; overflow-y: hidden; }
 .ledger-entry-account-node .inline-entries-scroll table,
-.ledger-date-node .inline-entries-scroll table { width: 100%; min-width: 0; table-layout: fixed; }
+.ledger-date-node .inline-entries-scroll table { width: max-content; min-width: max-content; table-layout: auto; }
 .ledger-entry-account-node .inline-entries-scroll th,
 .ledger-date-node .inline-entries-scroll th { position: static; background: #00655f !important; color: #fff !important; }
 .ledger-entry-account-node .inline-entries-scroll th:first-child,
-.ledger-date-node .inline-entries-scroll th:first-child { width: 105px; }
+.ledger-date-node .inline-entries-scroll th:first-child,
+.ledger-entry-account-node .inline-entries-scroll td:first-child,
+.ledger-date-node .inline-entries-scroll td:first-child { width: 112px; min-width: 112px !important; max-width: 112px; white-space: nowrap; }
 .ledger-entry-account-node .inline-entries-scroll th:nth-child(2),
-.ledger-date-node .inline-entries-scroll th:nth-child(2) { width: auto; }
+.ledger-date-node .inline-entries-scroll th:nth-child(2),
+.ledger-entry-account-node .inline-entries-scroll td:nth-child(2),
+.ledger-date-node .inline-entries-scroll td:nth-child(2) { width: 360px; min-width: 260px !important; max-width: 360px; }
 .ledger-entry-account-node .inline-entries-scroll th:nth-child(n + 3),
-.ledger-date-node .inline-entries-scroll th:nth-child(n + 3) { width: 112px; }
+.ledger-date-node .inline-entries-scroll th:nth-child(n + 3),
+.ledger-entry-account-node .inline-entries-scroll td:nth-child(n + 3),
+.ledger-date-node .inline-entries-scroll td:nth-child(n + 3) { width: 112px; min-width: 112px !important; max-width: 112px; white-space: nowrap; }
 .ledger-entry-account-node .inline-entries-scroll td,
-.ledger-date-node .inline-entries-scroll td { padding: .4rem .5rem; }
+.ledger-date-node .inline-entries-scroll td { padding: .34rem .5rem; line-height: 1.25; }
 .ledger-date-node { overflow: hidden; border-left: 3px solid #77b9b0; background: #fff; }
 .ledger-date-node summary { display: flex; align-items: center; justify-content: flex-start; gap: .55rem; padding: .52rem .65rem; color: #075f61; cursor: pointer; font-size: .74rem; font-weight: 800; }
 .ledger-date-node summary > span { margin-right: auto; }
 .ledger-date-node summary small { color: #637b7d; font-size: .68rem; font-weight: 600; }
-.ledger-date-node .inline-entries-scroll { margin: 0 .65rem .65rem; }
+.ledger-date-node .inline-entries-scroll { margin: 0 .45rem .4rem; }
 @media (max-width: 640px) { .group-ledger-accounts { padding-left: .8rem; }.ledger-account-trigger > span { grid-template-columns: auto auto minmax(80px, 1fr); }.ledger-account-trigger small { display: none; } }
 
 /*

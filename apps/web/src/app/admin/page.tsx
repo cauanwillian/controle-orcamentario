@@ -59,7 +59,7 @@ export default function UserAdministration() {
   if (!session) return <main className="admin-shell"><section className="empty-admin"><h1>Sessão não encontrada</h1><p>Entre no dashboard antes de acessar a administração.</p><a href="/">Ir para login</a></section></main>;
   if (!session.viewer.fullAccess) return <main className="admin-shell"><section className="empty-admin"><h1>Acesso restrito</h1><p>Seu perfil não possui acesso total para administrar usuários.</p><a href="/">Voltar ao dashboard</a></section></main>;
 
-  return <><AppSideNavigation active="admin" /><main className="admin-shell app-with-sidebar"><div className="admin-page">
+  return <><AppSideNavigation active="admin" /><main className="admin-shell app-with-top-navigation"><div className="admin-page">
     <header className="admin-header"><div><p className="admin-eyebrow">ADMINISTRAÇÃO</p><h1>Colaboradores e permissões</h1><p>Organize acessos por setor, cargos e níveis de responsabilidade.</p></div><a href="/">Voltar ao dashboard</a></header>
     <section className="admin-metrics"><article><span>Colaboradores ativos</span><strong>{activeUsers}</strong><small>de {users.length} cadastrados</small></article><article><span>Acesso total</span><strong>{fullAccessUsers}</strong><small>perfis sem restrição por setor</small></article><article className={pendingPasswords ? "attention" : ""}><span>Senhas pendentes</span><strong>{pendingPasswords}</strong><small>colaboradores sem senha definida</small></article><article><span>Setores disponíveis</span><strong>{sectors.length}</strong><small>para organização dos acessos</small></article></section>
     {error ? <p className="notice error">{error}</p> : null}{message ? <p className="notice success">{message}</p> : null}

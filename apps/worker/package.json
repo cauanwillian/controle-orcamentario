@@ -7,6 +7,7 @@
     "dev": "pnpm build && node dist/index.js",
     "build": "tsc -p tsconfig.json",
     "db:migrate": "pnpm build && node dist/database/migrate.js",
+    "ledger:reconcile": "pnpm build && node dist/database/reconcile-ledger.js",
     "import:plan": "pnpm build && node dist/imports/import-plan.js",
     "import:access": "pnpm build && node dist/imports/import-access.js",
     "import:budget": "pnpm build && node dist/imports/import-budget.js",

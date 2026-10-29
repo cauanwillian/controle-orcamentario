@@ -195,7 +195,7 @@
 }
 
 .budget-account-values small { white-space: nowrap; }
-.budget-account-values small, .budget-account-values strong { color: #00884a !important; font-weight: 850; }
+.budget-account-values small, .budget-account-values strong:not([data-variation-tone]) { color: #00884a !important; font-weight: 850; }
 
 /* Detalhamento contábil da conta no fluxo Orçamento → Grupos. */
 .budget-group-detail .group-pa-accounts > .account-branch-expandable {

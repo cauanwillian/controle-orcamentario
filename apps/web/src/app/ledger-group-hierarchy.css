@@ -1,0 +1,6 @@
+.ledger-group-hierarchy .detail-hierarchy-trigger { display: flex; align-items: center; gap: .5rem; width: 100%; min-width: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-align: left; cursor: pointer; }
+.ledger-group-hierarchy .detail-hierarchy-trigger:focus-visible { outline: 2px solid #008075; outline-offset: 3px; border-radius: .2rem; }
+.ledger-group-hierarchy .detail-hierarchy-trigger .sector-trigger-icon { margin: 0; }
+.ledger-group-hierarchy .detail-hierarchy-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ledger-group-hierarchy .pa-budget-row td:first-child { padding-left: 1.75rem; }
+.ledger-group-hierarchy .account-budget-row td:first-child { padding-left: 2.75rem; }

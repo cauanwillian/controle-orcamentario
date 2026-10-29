@@ -13,6 +13,7 @@
     "import:budget": "pnpm --filter @orcamento/worker import:budget",
     "import:ledger": "pnpm --filter @orcamento/worker import:ledger",
     "ledger:status": "pnpm --filter @orcamento/worker ledger:status",
+    "ledger:reconcile": "pnpm --filter @orcamento/worker ledger:reconcile",
     "dev": "concurrently --kill-others-on-fail \"pnpm --filter @orcamento/web dev\" \"pnpm --filter @orcamento/api dev\"",
     "build": "pnpm -r build"
   },
