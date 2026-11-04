@@ -3,7 +3,12 @@
   "private": true,
   "version": "0.1.0",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./ledger-import": {
+      "types": "./src/ledger-import.d.cts",
+      "import": "./src/ledger-import.cjs",
+      "require": "./src/ledger-import.cjs"
+    }
   }
 }
 

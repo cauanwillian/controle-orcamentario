@@ -12,9 +12,13 @@
     "import:access": "pnpm build && node dist/imports/import-access.js",
     "import:budget": "pnpm build && node dist/imports/import-budget.js",
     "import:ledger": "pnpm build && node dist/imports/import-ledger.js",
-    "ledger:status": "pnpm build && node dist/jobs/ledger-status.js"
+    "ledger:status": "pnpm build && node dist/jobs/ledger-status.js",
+    "ledger:inbox": "pnpm build && node dist/jobs/ledger-inbox.js",
+    "ledger:watch-inbox": "pnpm ledger:inbox",
+    "test": "node --import tsx --test src/imports/ledger-identity.test.ts src/jobs/ledger-inbox.test.ts"
   },
   "dependencies": {
+    "@orcamento/shared": "workspace:*",
     "bullmq": "^5.58.7",
     "dotenv": "^16.5.0",
     "exceljs": "^4.4.0",

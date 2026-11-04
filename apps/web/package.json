@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "node --import tsx --test src/app/export-report.test.ts src/app/report-metrics.test.ts"
   },
   "dependencies": {
     "exceljs": "4.4.0",
@@ -17,6 +18,7 @@
     "@types/node": "^22.15.30",
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.4",
+    "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
 }
