@@ -29,6 +29,9 @@ importers:
       '@nestjs/platform-fastify':
         specifier: ^11.1.6
         version: 11.2.6(@nestjs/common@11.2.6(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(@nestjs/core@11.2.6(@nestjs/common@11.2.6(reflect-metadata@0.2.2)(rxjs@7.8.2)(supports-color@8.1.1))(reflect-metadata@0.2.2)(rxjs@7.8.2))
+      '@orcamento/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       dotenv:
         specifier: ^16.5.0
         version: 16.6.1
@@ -82,12 +85,18 @@ importers:
       '@types/react-dom':
         specifier: ^19.1.4
         version: 19.3.0(@types/react@19.3.0)
+      tsx:
+        specifier: ^4.19.4
+        version: 4.23.15
       typescript:
         specifier: ^5.8.3
         version: 5.9.3
 
   apps/worker:
     dependencies:
+      '@orcamento/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       bullmq:
         specifier: ^5.58.7
         version: 5.81.5(supports-color@8.1.1)

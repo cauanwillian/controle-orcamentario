@@ -29,10 +29,12 @@ async function notifyPendingImport(payload: Record<string, unknown>) {
   if (!webhook) return { delivered: false, reason: "TEAMS_WEBHOOK_URL não configurada" };
   const reference = String(payload.expected_reference_date ?? "—");
   const latest = String(payload.latest_ledger_date ?? "não encontrada");
+  const rejected = payload.latest_rejected_today as { filename: string; error_summary: string | null } | null;
+  const rejectionText = rejected ? ` Último arquivo rejeitado hoje: ${rejected.filename}. Motivo: ${rejected.error_summary ?? "motivo não informado"}.` : "";
   const response = await fetch(webhook, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ text: `⚠️ Controle Orçamentário: o Livro Razão está pendente após o prazo. Referência esperada: ${reference}; referência encontrada: ${latest}. Verifique o envio da Contabilidade.` }),
+    body: JSON.stringify({ text: `⚠️ Controle Orçamentário: o Livro Razão está pendente após o prazo. Referência esperada: ${reference}; referência encontrada: ${latest}. Verifique o envio da Contabilidade.${rejectionText}` }),
   });
   if (!response.ok) throw new Error(`Falha ao enviar alerta para Teams (${response.status}).`);
   return { delivered: true };
@@ -51,16 +53,18 @@ async function run() {
     const holidays = await pool.query<{ holiday_date: string }>("SELECT holiday_date::text FROM business_holiday");
     const today = dateInTimeZone(timeZone);
     const expectedReferenceDate = previousBusinessDays(today, lagDays, new Set(holidays.rows.map((holiday) => holiday.holiday_date)));
-    const [latest, upload] = await Promise.all([
-      pool.query<{ posting_date: string | null; imported_at: string | null }>("SELECT MAX(posting_date)::text AS posting_date, MAX(updated_at)::text AS imported_at FROM ledger_entry"),
-      pool.query<{ uploaded_at: string | null; uploader: string | null }>("SELECT u.uploaded_at::text, e.name AS uploader FROM ledger_upload u JOIN employee e ON e.id = u.uploaded_by_employee_id ORDER BY u.uploaded_at DESC LIMIT 1")
+    const [latest, upload, rejected] = await Promise.all([
+      pool.query<{ posting_date: string | null; imported_at: string | null }>("SELECT MAX(posting_date)::text AS posting_date, MAX(updated_at)::text AS imported_at FROM ledger_entry_current"),
+      pool.query<{ uploaded_at: string | null; uploader: string | null }>("SELECT u.uploaded_at::text, COALESCE(e.name, CASE WHEN u.upload_source='AUTOMATICO' THEN 'Rotina Automática' WHEN u.upload_source='CLI' THEN 'Importação CLI' ELSE 'Sistema' END) AS uploader FROM ledger_upload u LEFT JOIN employee e ON e.id=u.uploaded_by_employee_id ORDER BY u.uploaded_at DESC LIMIT 1"),
+      pool.query<{ original_filename: string; error_summary: string | null }>("SELECT original_filename,error_summary FROM import_batch WHERE source_type='LIVRO_RAZAO' AND status='REJEITADO' AND (created_at AT TIME ZONE $1)::date=$2::date ORDER BY created_at DESC LIMIT 1", [timeZone, today])
     ]);
     const latestDate = latest.rows[0].posting_date;
     const latestUpload = upload.rows[0];
     const uploadedToday = latestUpload?.uploaded_at ? dateInTimeZone(timeZone, new Date(latestUpload.uploaded_at)) === today : false;
     const referenceStatus = latestDate && latestDate >= expectedReferenceDate ? "EM_DIA" : "PENDENTE";
     const status = uploadedToday && referenceStatus === "EM_DIA" ? "EM_DIA" : "PENDENTE";
-    const payload = { time_zone: timeZone, import_deadline: deadline, lag_business_days: lagDays, expected_reference_date: expectedReferenceDate, latest_ledger_date: latestDate, latest_upload_at: latestUpload?.uploaded_at ?? null, latest_uploader: latestUpload?.uploader ?? null, upload_received_today: uploadedToday, reference_status: referenceStatus, status };
+    const latestRejected = rejected.rows[0];
+    const payload = { time_zone: timeZone, import_deadline: deadline, lag_business_days: lagDays, expected_reference_date: expectedReferenceDate, latest_ledger_date: latestDate, latest_imported_at: latest.rows[0].imported_at, latest_upload_at: latestUpload?.uploaded_at ?? null, latest_uploader: latestUpload?.uploader ?? null, upload_received_today: uploadedToday, latest_rejected_today: latestRejected ? { filename: latestRejected.original_filename, error_summary: latestRejected.error_summary } : null, reference_status: referenceStatus, status };
     if (status !== "EM_DIA") {
       try { Object.assign(payload, { notification: await notifyPendingImport(payload) }); }
       catch (error) { Object.assign(payload, { notification: { delivered: false, reason: error instanceof Error ? error.message : "Falha desconhecida" } }); }

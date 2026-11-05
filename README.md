@@ -68,3 +68,9 @@ pnpm ledger:status
 ```
 
 O dashboard consulta a API em `http://localhost:3001`. A rotina local usa a data de referência de três dias úteis anteriores ao dia atual e o prazo configurado de 09:00.
+
+## Importação automática do Livro Razão
+
+Configure `LEDGER_INBOX_DIR` para a pasta local do servidor compartilhada com a Contabilidade. O padrão é `./data/inbox/livro-razao`; o coletor lê apenas arquivos `.xlsx` diretamente nessa pasta e cria `processados/` e `rejeitados/` nela. `LEDGER_INBOX_MIN_AGE_MS` (padrão `15000`) e `LEDGER_INBOX_STABILITY_WAIT_MS` (padrão `2000`) controlam a proteção contra arquivos ainda sendo copiados. `LEDGER_STORAGE_DIR` define onde ficam as cópias rastreáveis; o padrão é `./data/uploads`.
+
+Execute uma leitura manual com `pnpm ledger:inbox` (alias: `pnpm ledger:watch-inbox`). No Windows, registre a execução periódica a cada cinco minutos entre 06:00 e 20:00 usando `powershell -ExecutionPolicy Bypass -File .\scripts\register-ledger-inbox-task.ps1`. Arquivos importados e duplicados por checksum publicado vão para `processados/`; arquivos inválidos vão para `rejeitados/` com um arquivo `.erro.txt` explicando a validação recusada. Falhas operacionais que não sejam validação deixam o arquivo na inbox para nova tentativa.

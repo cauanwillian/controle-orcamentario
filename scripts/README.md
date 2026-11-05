@@ -65,3 +65,15 @@ Para agendar o backup às 19:00 diariamente:
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\scripts\register-backup-task.ps1
 ```
+
+## Inbox local do Livro Razão
+
+Defina `LEDGER_INBOX_DIR` como a pasta local do servidor compartilhada com a Contabilidade. O padrão é `./data/inbox/livro-razao`; o coletor ignora pastas, arquivos ocultos, temporários do Excel/Windows e arquivos fora da raiz. `LEDGER_INBOX_MIN_AGE_MS` e `LEDGER_INBOX_STABILITY_WAIT_MS` têm padrões de 15000 ms e 2000 ms. `LEDGER_STORAGE_DIR` aponta para as cópias rastreáveis (padrão `./data/uploads`).
+
+Para processar manualmente, execute `pnpm.cmd ledger:inbox`. Para registrar a tarefa do Windows que verifica a pasta a cada cinco minutos entre 06:00 e 20:00, execute uma vez no PowerShell, na pasta do projeto:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\register-ledger-inbox-task.ps1
+```
+
+O comando agendado usa `scripts/sync-ledger-inbox.ps1`, chama `pnpm.cmd ledger:inbox` e grava a saída em `logs/ledger-inbox.log`. A pasta `processados/` guarda importações concluídas e duplicatas já publicadas; `rejeitados/` guarda arquivos recusados e seus arquivos `.erro.txt`. Falhas operacionais que não sejam validação permanecem na inbox para nova tentativa.

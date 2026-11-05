@@ -70,7 +70,7 @@ export class DashboardService implements OnModuleDestroy {
       this.pool.query<{ setting_key: string; setting_value: string }>("SELECT setting_key, setting_value FROM app_setting WHERE setting_key IN ('business_timezone', 'ledger_accounting_lag_days', 'ledger_import_deadline')"),
       this.pool.query<{ holiday_date: string }>("SELECT holiday_date::text FROM business_holiday"),
       this.pool.query<{ posting_date: string | null }>("SELECT MAX(posting_date)::text AS posting_date FROM ledger_entry_current"),
-      this.pool.query<{ uploaded_at: string | null; uploader: string | null }>("SELECT u.uploaded_at::text, e.name AS uploader FROM ledger_upload u JOIN employee e ON e.id = u.uploaded_by_employee_id ORDER BY u.uploaded_at DESC LIMIT 1")
+      this.pool.query<{ uploaded_at: string | null; uploader: string | null }>("SELECT u.uploaded_at::text, COALESCE(e.name, CASE WHEN u.upload_source='AUTOMATICO' THEN 'Rotina Automática' WHEN u.upload_source='CLI' THEN 'Importação CLI' ELSE 'Sistema' END) AS uploader FROM ledger_upload u LEFT JOIN employee e ON e.id=u.uploaded_by_employee_id ORDER BY u.uploaded_at DESC LIMIT 1")
     ]);
     const settings = new Map(settingsResult.rows.map((row) => [row.setting_key, row.setting_value]));
     const timeZone = settings.get("business_timezone") ?? "America/Cuiaba";
